@@ -1,22 +1,23 @@
 <?php
 /*************************************
-  * ‰æ‘œBBS             by ToR
+  * Image BBS by ToR
   *
   * http://php.s3.to/
   *
-  * ‰æ‘œƒAƒbƒvƒ[ƒhŒf¦”Â‚Å‚·B
+  * Image upload BBS.
   *
-  * •Û‘¶—pƒfƒBƒŒƒNƒgƒŠimg‚ğì¬‚µ‚Ä777‚É‚µ‚Ü‚·B
-  * ‹ó‚ÌƒƒOƒtƒ@ƒCƒ‹imglog.log‚ğ—pˆÓ‚µ‚Ä666‚É‚µ‚Ü‚·B
-  * ƒT[ƒo[‚É‚æ‚Á‚Ä‚ÍƒAƒvƒ[ƒh‚Å‚«‚Ü‚¹‚ñ
+  * Prepare a directory img for storage and set it to 777.
+  * Prepare an empty log file imglog.log and set it to 666.
+  * Some servers cannot be uploaded.
   *
-  * 2001/09/27 v2.4 ‰æ‘œ•Û‘¶–¼‚ğƒ[ƒJƒ‹¨ŠÔ–¼Aƒy[ƒWƒ“ƒO
-  * 2001/10/31 v3.0 ì‚è’¼‚µBŠÇ—Ò—p“Šeƒy[ƒWì¬BÌ«°Ñ‚à•ª—£‰Â
-  * 2001/11/05 v3.1 ƒoƒO‚½‚­‚³‚ñC³AƒŒƒX’Ç‰Á
-  * 2002/05/19 v3.2 íœŠÖ˜A‚ÌƒoƒOC³   copy¨move_uploded_fileiÀŞÒ‚È‚çcopy‚É
-  * 2002/06/15 v3.3 ‰æ‘œˆÈŠO‚Ìƒtƒ@ƒCƒ‹‚ª±¯ÌßÛ°ÄŞ‰Â”\‚Å‚µ‚½EE½²Ï¾İ@298s–Ú
-  * 2002/01/25 v3.4 •s³ƒAƒbƒvƒ[ƒh‘Îô
-  * 2002/02/11 v3.5 ƒNƒbƒL[‚Ì•¶š‰»‚¯‘Îô
+  * 2001/09/27 v2.4 change image save name from local to time name, paging
+  * 2001/10/31 v3.0 Rebuild. Created a posting page for administrators. Forms can be separated.
+  * 2001/11/05 v3.1 Fixed a lot of bugs, added a response.
+  * 2002/05/19 v3.2 Fixed a bug related to deletion. copy -> move_uploded_file (if not, copy it)
+  * 2002/06/15 v3.3 uploaded files other than images were available... sorry, line 298
+  * 2002/01/25 v3.4 Anti-Uploading
+  * 2002/02/11 v3.5 fix for garbled cookies
+
   **************************************/
 if(phpversion()>="4.1.0"){
   extract($_REQUEST);
@@ -24,40 +25,40 @@ if(phpversion()>="4.1.0"){
   $upfile_name=$_FILES["upfile"]["name"];
   $upfile=$_FILES["upfile"]["tmp_name"];
 }
-//----İ’è--------
-define(LOGFILE, 'imglog.log');		//ƒƒOƒtƒ@ƒCƒ‹–¼
-define(IMG_DIR, 'img/');		//‰æ‘œ•Û‘¶ƒfƒBƒŒƒNƒgƒŠBgazou.php‚©‚çŒ©‚Ä
+//----è¨­å®š--------
+define(LOGFILE, 'imglog.log');		// Name for logfile
+define(IMG_DIR, 'img/');		// Img folder for gazoubbs
 
-define(TITLE, '‰æ‘œBBS');		//ƒ^ƒCƒgƒ‹i<title>‚ÆTOPj
-define(HOME,  'http://php.s3.to');	//uƒz[ƒ€v‚Ö‚ÌƒŠƒ“ƒN
+define(TITLE, 'Image BBS');		// Title of your BBSï¼ˆ<title>ã¨TOPï¼‰
+define(HOME,  '../');	// Clicked upon clicking "Index"
 
-define(MAX_KB, '100');			//“Še—e—Ê§ŒÀ KBiphp‚Ìİ’è‚É‚æ‚è2M‚Ü‚Å
-define(MAX_W,  '250');			//“ŠeƒTƒCƒY•i‚±‚êˆÈã‚Íwidth‚ğk¬
-define(MAX_H,  '250');			//“ŠeƒTƒCƒY‚‚³
+define(MAX_KB, '100');			//Max kilobytes a file can have
+define(MAX_W,  '250');			//Max width a file can have
+define(MAX_H,  '250');			//Max height a file can have
 
-define(PAGE_DEF, '7');			//ˆêƒy[ƒW‚É•\¦‚·‚é‹L–
-define(LOG_MAX,  '200');		//ƒƒOÅ‘ås”
+define(PAGE_DEF, '7');			// Number of posts that can appear on one page
+define(LOG_MAX,  '200');		// Mazimum number of posts in the log
 
-define(ADMIN_PASS, '0123');		//ŠÇ—ÒƒpƒX
-define(CHECK, 0);			//ŠÇ—Ò‚ªƒ`ƒFƒbƒN‚µ‚Ä‚©‚ç‰æ‘œ•\¦Hyes=1
-define(SOON_ICON, '/soon.jpg');		//ƒ`ƒFƒbƒN’†‚Ì‚Ì‘ã‘Ö‰æ‘œ
-define(RE_COL, '789922');               //„‚ª•t‚¢‚½‚ÌF
+define(ADMIN_PASS, '0123');		// The admin password
+define(CHECK, 0);			//Make uploaded images have to go through approval by admins? yes=1
+define(SOON_ICON, '/soon.jpg');		// See CHECK. Image that appears as a replacement for photos going through the approval proccess
+define(RE_COL, '789922');               // Color of greentext
 
-define(NIKKI, 0);			//“ŠeƒtƒH[ƒ€‚ğ•\¦‚µ‚È‚¢H Yes=1 No=0
+define(NIKKI, 0);			//Close the bulletin board to users? Yes=1 No=0
 
-define(PHP_SELF, "gazou.php");		//‚±‚ÌƒXƒNƒŠƒvƒg–¼;
+define(PHP_SELF, "gazou.php");		//Script name;
 
 
-//‰æ‘œ•Û‘¶â‘ÎƒpƒX $path="/home/public_html/***/img/";
+//ç”»åƒä¿å­˜çµ¶å¯¾ãƒ‘ã‚¹ $path="/home/public_html/***/img/";
 //$path = dirname($_SERVER[PATH_TRANSLATED]).IMG_DIR;
 $path = IMG_DIR;
 
-/* –¢’è
-$badstring = array("dummy_string","dummy_string2"); //‹‘â‚·‚é•¶š—ñ
-$badfile = array("dummy","dummy2"); //‹‘â‚·‚éƒtƒ@ƒCƒ‹‚Ìmd5
-$badip = array("addr.dummy.com","addr2.dummy.com"); //‹‘â‚·‚éƒzƒXƒg
+/* æœªå®š
+$badstring = array("dummy_string","dummy_string2"); //æ‹’çµ¶ã™ã‚‹æ–‡å­—åˆ—
+$badfile = array("dummy","dummy2"); //æ‹’çµ¶ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®md5
+$badip = array("addr.dummy.com","addr2.dummy.com"); //æ‹’çµ¶ã™ã‚‹ãƒ›ã‚¹ãƒˆ
 */
-/* ƒwƒbƒ_ */
+/* ãƒ˜ãƒƒãƒ€ */
 function head(&$dat){
   $dat.='
 <html><head>
@@ -73,15 +74,15 @@ small { font-size:8pt }
 <title>'.TITLE.'</title></head>
 <body bgcolor="#FFFFEE" text="#800000" link="#0000EE" vlink="#0000EE">
 <p align=right>
-[<a href="'.HOME.'" target="_top">ƒz[ƒ€</a>]
-[<a href="'.PHP_SELF.'?mode=admin">ŠÇ——p</a>]
+[<a href="'.HOME.'" target="_top">Go Home</a>]
+[<a href="'.PHP_SELF.'?mode=admin">Admin</a>]
 <p align=center>
-<font color="#800000" face="‚l‚r ‚oƒSƒVƒbƒN" size=5>
+<font color="#800000" face="MS PGothic" size=5>
 <b><SPAN>'.TITLE.'</SPAN></b><br></font>
 <hr width="90%" size=1>
 ';
 }
-/* “ŠeƒtƒH[ƒ€ */
+/* æŠ•ç¨¿ãƒ•ã‚©ãƒ¼ãƒ  */
 function form(&$dat,$resno,$admin=""){
   global $gazoubbs;
 
@@ -99,7 +100,7 @@ function form(&$dat,$resno,$admin=""){
         break;
       }
     }
-    if(!$find) error("ŠY“–‹L–‚ª‚İ‚Â‚©‚è‚Ü‚¹‚ñ");
+    if(!$find) error("The post you are trying to view cannot be found!");
 
 	if(preg_match("/Re\[([0-9])\]:/", $sub, $reg)){
       $reg[1]++;
@@ -111,11 +112,11 @@ function form(&$dat,$resno,$admin=""){
     }
     $r_com = "&gt;$com";
     $r_com = preg_replace("/<br( \/)?>/","\r&gt;",$r_com);
-    $msg = "<h5>No. $no ‚Ö‚ÌƒŒƒX‚Å‚·</h5>";
+    $msg = "<h5>Response to post No. $no</h5>";
   }
   if($admin){
     $hidden = "<input type=hidden name=admin value=\"".ADMIN_PASS."\">";
-    $msg = "<h4>ƒ^ƒO‚ª‚Â‚©‚¦‚Ü‚·</h4>";
+    $msg = "<h4>You can use HTML tags in your posts.</h4>";
   }
   $dat.='
 <center>'.$msg.'
@@ -125,52 +126,52 @@ function form(&$dat,$resno,$admin=""){
 <input type=hidden name="MAX_FILE_SIZE" value="'.$maxbyte.'">
 <table cellpadding=1 cellspacing=1>
 <tr>
-  <td bgcolor=#eeaa88><b>‚¨‚È‚Ü‚¦</b></td>
+  <td bgcolor=#eeaa88><b>Name</b></td>
   <td><input type=text name=name size="28" value="'.$cname.'"></td>
 </tr>
 <tr>
-  <td bgcolor=#eeaa88><b>‚dƒ[ƒ‹</b></td>
+  <td bgcolor=#eeaa88><b>E-Mail</b></td>
   <td><input type=text name=email size="28" value="'.$cemail.'"></td>
 </tr>
 <tr>
-  <td bgcolor=#eeaa88><b>‘è@@–¼</b></td>
+  <td bgcolor=#eeaa88><b>Title</b></td>
   <td>
     <input type=text name=sub size="35" value="'.$r_sub.'">
     <input type=submit value="Submit"><input type=reset value="Reset">
   </td>
 </tr>
 <tr>
-  <td bgcolor=#eeaa88><b>ƒRƒƒ“ƒg</b></td>
+  <td bgcolor=#eeaa88><b>Contents</b></td>
   <td><textarea name=com cols="48" rows="4" wrap=soft>'.$r_com.'</textarea>
   </td>
 </tr>
 <tr>
-  <td bgcolor=#eeaa88><b>‚t‚q‚k</b></td>
+  <td bgcolor=#eeaa88><b>URL</b></td>
   <td><input type=text name=url size="63" value="http://"></td>
 </tr>
 <tr>
-  <td bgcolor=#eeaa88><b>“Y•tFile</b></td>
+  <td bgcolor=#eeaa88><b>File</b></td>
   <td><input type=file name=upfile size="35"></td>
 </tr>
 <tr>
-  <td bgcolor=#eeaa88><b>íœƒL[</b></td>
+  <td bgcolor=#eeaa88><b>Delkey</b></td>
   <td>
     <input type=password name=pwd size=8 maxlength=8 value="'.$cpass.'">
-    <small>(‹L–‚Ìíœ—pB‰p”š‚Å8•¶šˆÈ“à)</small>
+    <small>(Used for deleting your posts. Alphanumeric, up to 8 characters)</small>
   </td>
 </tr>
 <tr><td colspan=2>
 <small>
-<LI>“Y•t‰Â”\ƒtƒ@ƒCƒ‹ F GIF, JPG, PNG<br>
-<LI>ƒuƒ‰ƒEƒU‚É‚æ‚Á‚Ä‚Í³í‚É“Y•t‚Å‚«‚È‚¢‚±‚Æ‚ª‚ ‚è‚Ü‚·B<br>
-<LI>Å‘å“Šeƒf[ƒ^—Ê‚Í '.MAX_KB.' KB ‚Ü‚Å‚Å‚·B<br>
-<LI>‰æ‘œ‚Í‰¡ '.MAX_W.'ƒsƒNƒZƒ‹Ac '.MAX_H.'ƒsƒNƒZƒ‹‚ğ’´‚¦‚é‚Æk¬•\¦‚³‚ê‚Ü‚·B
+<LI>Allowed file extensionsï¼š GIF, JPG, PNG<br>
+<LI>Some browsers may not attach properly.<br>
+<LI>Files you submit must be less than '.MAX_KB.' KB in size.<br>
+<LI>If the image you submit is larger than '.MAX_W.'x'.MAX_H.', it will be thumbnailed.
 </small>
 </td></tr></table></form></center>
 <hr>
   ';
 }
-/* ‹L–•”•ª */
+/* è¨˜äº‹éƒ¨åˆ† */
 function main(&$dat, $page){
   global $path;
 
@@ -181,116 +182,116 @@ function main(&$dat, $page){
     if($line[$i]=="") continue;
     list($no,$now,$name,$email,$sub,$com,$url,
          $host,$pwd,$ext,$w,$h,$time,$chk) = explode(",", $line[$i]);
-    // URL‚Æƒ[ƒ‹‚ÉƒŠƒ“ƒN
+    // URLã¨ãƒ¡ãƒ¼ãƒ«ã«ãƒªãƒ³ã‚¯
     if($url)   $url = "<a href=\"http://$url\" target=_blank>Link</a>";
     if($email) $name = "<a href=\"mailto:$email\">$name</a>";
     $com = auto_link($com);
 	$com = preg_replace("/(^|>)(&gt;[^<]*)/", "\\1<font color=".RE_COL.">\\2</font>", $com);
-    // ‰æ‘œƒtƒ@ƒCƒ‹–¼
+    // ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«å
     $img = $path.$time.$ext;
     $src = IMG_DIR.$time.$ext;
-/* ©—R‚É•ÏX‚µ‚Ä‚­‚¾‚³‚¢["]=[\"]‚É */
-    // <imgƒ^ƒOì¬
+/* è‡ªç”±ã«å¤‰æ›´ã—ã¦ãã ã•ã„["]=[\"]ã« */
+    // <imgã‚¿ã‚°ä½œæˆ
     $imgsrc = "";
     if($ext && is_file($img)){
-      $size = ceil(filesize($img) / 1024);//alt‚ÉƒTƒCƒY•\¦
-      if(CHECK && $chk != 1){//–¢ƒ`ƒFƒbƒN
+      $size = ceil(filesize($img) / 1024);//altã«ã‚µã‚¤ã‚ºè¡¨ç¤º
+      if(CHECK && $chk != 1){//æœªãƒã‚§ãƒƒã‚¯
         $imgsrc = "<img src=".SOON_ICON." hspace=20>";
-      }elseif($w && $h){//ƒTƒCƒY‚ª‚ ‚é
+      }elseif($w && $h){//ã‚µã‚¤ã‚ºãŒã‚ã‚‹æ™‚
         $imgsrc = "<a href=\"".$src."\" target=_blank><img src=".$src."
 			border=0 align=left width=$w height=$h hspace=20 alt=\"".$size." KB\"></a>";
-      }else{//‚»‚êˆÈŠO
+      }else{//ãã‚Œä»¥å¤–
         $imgsrc = "<a href=\"".$src."\" target=_blank><img src=".$src."
 			border=0 align=left hspace=20 alt=\"".$size." KB\"></a>";
       }
     }
-    // ƒƒCƒ“ì¬
+    // ãƒ¡ã‚¤ãƒ³ä½œæˆ
     $dat.="No.$no <font color=#cc1105 size=+1><b>$sub</b></font><br> ";
-    $dat.="Name <font color=#117743><b>$name</b></font> Date $now &nbsp; $url [<a href=".PHP_SELF."?res=$no>ƒŒƒX</a>]";
+    $dat.="Name <font color=#117743><b>$name</b></font> Date $now &nbsp; $url [<a href=".PHP_SELF."?res=$no>ãƒ¬ã‚¹</a>]";
     $dat.="<p><blockquote>$imgsrc $com</blockquote><br clear=left><hr>\n";
 
     $p++;
-    clearstatcache();//ƒtƒ@ƒCƒ‹‚Ìstat‚ğƒNƒŠƒA
+    clearstatcache();//ãƒ•ã‚¡ã‚¤ãƒ«ã®statã‚’ã‚¯ãƒªã‚¢
   }
   $prev = $st - PAGE_DEF;
   $next = $st + PAGE_DEF;
-  // ‰üƒy[ƒWˆ—
+  // æ”¹ãƒšãƒ¼ã‚¸å‡¦ç†
   $dat.="<table align=left><tr>\n";
   if($prev >= 0){
     $dat.="<td><form action=\"".PHP_SELF."\" method=POST>";
     $dat.="<input type=hidden name=page value=$prev>";
-    $dat.="<input type=submit value=\"‘O‚Ìƒy[ƒW\" name=submit>\n";
+    $dat.="<input type=submit value=\"Previous\" name=submit>\n";
     $dat.="</form></td>\n";
   }
   if($p >= PAGE_DEF && count($line) > $next){
     $dat.="<td><form action=\"".PHP_SELF."\" method=POST>";
     $dat.="<input type=hidden name=page value=$next>";
-    $dat.=" <input type=submit value=\"Ÿ‚Ìƒy[ƒW\" name=submit>\n";
+    $dat.=" <input type=submit value=\"Next\" name=submit>\n";
     $dat.="</form></td>\n";
   }
   $dat.="</td>\n</tr></table>\n";
 }
-/* ƒtƒbƒ^ */
+/* ãƒ•ãƒƒã‚¿ */
 function foot(&$dat){
   $dat.='
 <table align=right><tr>
 <td nowrap align=center><form action="'.PHP_SELF.'" method=POST>
 <input type=hidden name=mode value=usrdel>
-y‹L–íœz<br>
-‹L–No<input type=text name=no size=3>
-íœƒL[<input type=password name=pwd size=4 maxlength=8>
-<input type=submit value="íœ">
+"Post deletion"<br>
+Post No.<input type=text name=no size=3>
+Delkey<input type=password name=pwd size=4 maxlength=8>
+<input type=submit value="Gelete">
 </form></td>
 </tr></table><br clear=all>
 <center><P><small><!-- GazouBBS v3.5 -->
-- <a href="http://php.s3.to" target=_top>GazouBBS</a> -
+- <a href="http://php.loglog.jp" target=_top>GazouBBS</a> -
 </small></center>
 </body></html>
   ';
 }
-/* ‹L–‘‚«‚İ */
+/* è¨˜äº‹æ›¸ãè¾¼ã¿ */
 function regist($name,$email,$sub,$com,$url,$pwd,$upfile,$upfile_name){
   global $REQUEST_METHOD,$path;
 
-  // ƒtƒH[ƒ€“à—e‚ğƒ`ƒFƒbƒN
-  if(!$name || preg_match("/^( |@)*$/u",$name)) error("–¼‘O‚ª‘‚«‚Ü‚ê‚Ä‚¢‚Ü‚¹‚ñ"); 
-  if(!$com||preg_match("/^( |@|\t)*$/u",$com)) error("–{•¶‚ª‘‚«‚Ü‚ê‚Ä‚¢‚Ü‚¹‚ñ"); 
-  if(!$sub||preg_match("/^( |@)*$/u",$sub))   $sub="i–³‘èj"; 
-  if(strlen($com) > 1000) error("–{•¶‚ª’·‚·‚¬‚Ü‚·‚ÁI");
+  // ãƒ•ã‚©ãƒ¼ãƒ å†…å®¹ã‚’ãƒã‚§ãƒƒã‚¯
+  if(!$name || preg_match("/^( |ã€€)*$/u",$name)) error("Name not written in."); 
+  if(!$com||preg_match("/^( |ã€€|\t)*$/u",$com)) error("No text has been written."); 
+  if(!$sub||preg_match("/^( |ã€€)*$/u",$sub))   $sub="ï¼ˆUntitledï¼‰"; 
+  if(strlen($com) > 1000) error("Contents of the post are too long! Please shorten it to under 1000 characters.");
 
   $line = file(LOGFILE);
-  // ŠÔ‚ÆƒzƒXƒgæ“¾
+  // æ™‚é–“ã¨ãƒ›ã‚¹ãƒˆå–å¾—
   $tim = time();
   $host = gethostbyaddr(getenv("REMOTE_ADDR"));
-  // ˜A‘±“Šeƒ`ƒFƒbƒN
+  // é€£ç¶šæŠ•ç¨¿ãƒã‚§ãƒƒã‚¯
   list($lastno,,$lname,,,$lcom,,$lhost,,,,,$ltime,) = explode(",", $line[0]);
   if(RENZOKU && $host == $lhost && $tim - $ltime < RENZOKU)
-    error("˜A‘±“Še‚Í‚à‚¤‚µ‚Î‚ç‚­ŠÔ‚ğ’u‚¢‚Ä‚©‚ç‚¨Šè‚¢’v‚µ‚Ü‚·");
-  // No.‚ÆƒpƒX‚ÆŠÔ‚ÆURLƒtƒH[ƒ}ƒbƒg
+    error("Please allow a few more minutes for continuous posting.");
+  // No.ã¨ãƒ‘ã‚¹ã¨æ™‚é–“ã¨URLãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆ
   $no = $lastno + 1;
   $c_pass = $pwd;
   $pass = ($pwd) ? substr(md5($pwd),2,8) : "*";
   $now = gmdate("Y/m/d(D) H:i",$tim+9*60*60);
   $url = preg_replace("/^http:\/\//", "", $url);
-  //ƒeƒLƒXƒg®Œ`
+  //ãƒ†ã‚­ã‚¹ãƒˆæ•´å½¢
   $name = CleanStr($name);
   $email= CleanStr($email);
   $sub  = CleanStr($sub);
   $url  = CleanStr($url);
   $com  = CleanStr($com);
-  // ‰üs•¶š‚Ì“ˆêB 
+  // æ”¹è¡Œæ–‡å­—ã®çµ±ä¸€ã€‚ 
   $com = str_replace( "\r\n",  "\n", $com); 
   $com = str_replace( "\r",  "\n", $com);
-  // ˜A‘±‚·‚é‹ós‚ğˆês
+  // é€£ç¶šã™ã‚‹ç©ºè¡Œã‚’ä¸€è¡Œ
   while (strstr($com, "\n\n\n") == true) {
 	  $com = str_replace("\n\n\n", "\n\n", $com);
   }
-  $com = nl2br($com);										//‰üs•¶š‚Ì‘O‚É<br>‚ğ‘ã“ü‚·‚é
-  $com = str_replace("\n",  "", $com);	//\n‚ğ•¶š—ñ‚©‚çÁ‚·B
-  // “ñd“Šeƒ`ƒFƒbƒN
+  $com = nl2br($com);										//æ”¹è¡Œæ–‡å­—ã®å‰ã«<br>ã‚’ä»£å…¥ã™ã‚‹
+  $com = str_replace("\n",  "", $com);	//\nã‚’æ–‡å­—åˆ—ã‹ã‚‰æ¶ˆã™ã€‚
+  // äºŒé‡æŠ•ç¨¿ãƒã‚§ãƒƒã‚¯
   if($name == $lname && $com == $lcom)
-	  error("“ñd“Še‚Í‹Ö~‚Å‚·<br><br><a href=$PHP_SELF>ƒŠƒ[ƒh</a>");
-  // ƒƒOs”ƒI[ƒo[
+	  error("Double posting is not allowed. <br><br><a href=$PHP_SELF>Reload</a>?");
+  // ãƒ­ã‚°è¡Œæ•°ã‚ªãƒ¼ãƒãƒ¼
   if(count($line) >= LOG_MAX){
     for($d = count($line)-1; $d >= LOG_MAX-1; $d--){
       list($dno,,,,,,,,,$ext,,,$dtime,) = explode(",", $line[$d]);
@@ -298,23 +299,23 @@ function regist($name,$email,$sub,$com,$url,$pwd,$upfile,$upfile_name){
       $line[$d] = "";
     }
   }
-  // ƒAƒbƒvƒ[ƒhˆ—
+  // ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰å‡¦ç†
   if(file_exists($upfile)){
     $dest = $path.$upfile_name;
     move_uploaded_file($upfile, $dest);
-    //ª‚ÅƒGƒ‰[‚È‚ç«‚É•ÏXs
+    //â†‘ã§ã‚¨ãƒ©ãƒ¼ãªã‚‰â†“ã«å¤‰æ›´s
     //copy($upfile, $dest);
-    if(!is_file($dest)) error("ƒAƒbƒvƒ[ƒh‚É¸”s‚µ‚Ü‚µ‚½B<br>ƒT[ƒo‚ªƒTƒ|[ƒg‚µ‚Ä‚¢‚È‚¢‰Â”\«‚ª‚ ‚è‚Ü‚·");
+    if(!is_file($dest)) error("Upload was unsuccessful.<br>The server may not support the file you were uploading.");
     $size = @getimagesize($dest);
-    if($size[2]=="") error("ƒAƒbƒvƒ[ƒh‚É¸”s‚µ‚Ü‚µ‚½B<br>‰æ‘œƒtƒ@ƒCƒ‹ˆÈŠO‚Íó‚¯•t‚¯‚Ü‚¹‚ñ");
+    if($size[2]=="") error("Upload was unsuccessful.<br>Only image files will be accepted.");
     $W = $size[0];
     $H = $size[1];
     $ext = strtolower(substr($upfile_name,-4));
-    //if ($ext == ".php" || $ext == "php3" || $ext == "php4" || $ext == "html") error("ƒAƒbƒvƒ[ƒh‚É¸”s‚µ‚Ü‚µ‚½B<br>‰æ‘œƒtƒ@ƒCƒ‹ˆÈŠO‚Íó‚¯•t‚¯‚Ü‚¹‚ñ");
+    //if ($ext == ".php" || $ext == "php3" || $ext == "php4" || $ext == "html") error("ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã«å¤±æ•—ã—ã¾ã—ãŸã€‚<br>ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«ä»¥å¤–ã¯å—ã‘ä»˜ã‘ã¾ã›ã‚“");
 	// ^ who thought this was a good idea
-	if ($ext !== ".png" && $ext !== ".jpg" && $ext !== ".gif") error("ƒAƒbƒvƒ[ƒh‚É¸”s‚µ‚Ü‚µ‚½B<br>‰æ‘œƒtƒ@ƒCƒ‹ˆÈŠO‚Íó‚¯•t‚¯‚Ü‚¹‚ñ");
+	if ($ext !== ".png" && $ext !== ".jpg" && $ext !== ".gif") error("Upload was unsuccessful<br>Only image files will be accepted.");
     rename($dest,$path.$tim.$ext);
-    // ‰æ‘œ•\¦k¬
+    // ç”»åƒè¡¨ç¤ºç¸®å°
     if($W > MAX_W || $H > MAX_H){
       $W2 = MAX_W / $W;
       $H2 = MAX_H / $H;
@@ -324,13 +325,13 @@ function regist($name,$email,$sub,$com,$url,$pwd,$upfile,$upfile_name){
       $W = $W * $key;
       $H = $H * $key;
     }
-    $mes = "‰æ‘œ $upfile_name ‚ÌƒAƒbƒvƒ[ƒh‚ª¬Œ÷‚µ‚Ü‚µ‚½<br><br>";
+    $mes = "Image $upfile_name has uploaded successfully!<br><br>";
   }
-  $chk = (CHECK) ? 0 : 1;//–¢ƒ`ƒFƒbƒN‚Í0
+  $chk = (CHECK) ? 0 : 1;//æœªãƒã‚§ãƒƒã‚¯ã¯0
 
-    //ƒNƒbƒL[•Û‘¶
+    //ã‚¯ãƒƒã‚­ãƒ¼ä¿å­˜
   $cookvalue = implode(",", array($name,$email,$c_pass));
-  setcookie ("gazoubbs", $cookvalue,time()+14*24*3600);  /* 2TŠÔ‚ÅŠúŒÀØ‚ê */
+  setcookie ("gazoubbs", $cookvalue,time()+14*24*3600);  /* 2é€±é–“ã§æœŸé™åˆ‡ã‚Œ */
 
   $newline = "$no,$now,$name,$email,$sub,$com,$url,$host,$pass,$ext,$W,$H,$tim,$chk,\n";
 
@@ -340,28 +341,28 @@ function regist($name,$email,$sub,$com,$url,$pwd,$upfile,$upfile_name){
   fputs($fp, implode('', $line));
   fclose($fp);
 
-  echo "$msg ‰æ–Ê‚ğØ‚è‘Ö‚¦‚Ü‚·";
+  echo "$msg The screen will change to your post in a few seconds";
   echo "<META HTTP-EQUIV=\"refresh\" content=\"1;URL=".PHP_SELF."?\">";
 }
-/* ƒeƒLƒXƒg®Œ` */
+/* ãƒ†ã‚­ã‚¹ãƒˆæ•´å½¢ */
 function CleanStr($str){
   global $admin;
 
-  $str = trim($str);//æ“ª‚Æ––”ö‚Ì‹ó”’œ‹
-  if (get_magic_quotes_gpc()) {//‚ğíœ
+  $str = trim($str);//å…ˆé ­ã¨æœ«å°¾ã®ç©ºç™½é™¤å»
+  if (get_magic_quotes_gpc()) {//ï¿¥ã‚’å‰Šé™¤
     $str = stripslashes($str);
   }
-  if($admin!=ADMIN_PASS){//ŠÇ—Ò‚Íƒ^ƒO‰Â”\
-    $str = htmlspecialchars($str);//ƒ^ƒO‚Á‹Ö~
-    $str = str_replace("&amp;", "&", $str);//“Áê•¶š
+  if($admin!=ADMIN_PASS){//ç®¡ç†è€…ã¯ã‚¿ã‚°å¯èƒ½
+    $str = htmlspecialchars($str);//ã‚¿ã‚°ã£ç¦æ­¢
+    $str = str_replace("&amp;", "&", $str);//ç‰¹æ®Šæ–‡å­—
   }
-  return str_replace(",", "&#44;", $str);//ƒJƒ“ƒ}‚ğ•ÏŠ·
+  return str_replace(",", "&#44;", $str);//ã‚«ãƒ³ãƒã‚’å¤‰æ›
 }
-/* ƒ†[ƒU[íœ */
+/* ãƒ¦ãƒ¼ã‚¶ãƒ¼å‰Šé™¤ */
 function usrdel($no,$pwd){
   global $path;
 
-  if($no == "") error("íœNo‚ª“ü—Í˜R‚ê‚Å‚·");
+  if($no == "") error("Deletion No. was not entered.");
 
   $line = file(LOGFILE);
   $flag = FALSE;
@@ -371,43 +372,43 @@ function usrdel($no,$pwd){
     if($no == $dno) {
       if(substr(md5($pwd),2,8) == $pass || ($pwd == '' && $pass == '*')){
         $flag = TRUE;
-        $line[$i] = "";			//ƒpƒXƒ[ƒh‚ªƒ}ƒbƒ`‚µ‚½s‚Í‹ó‚É
-        $delfile = $path.$dtim.$dext;	//íœƒtƒ@ƒCƒ‹
+        $line[$i] = "";			//ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ãŒãƒãƒƒãƒã—ãŸè¡Œã¯ç©ºã«
+        $delfile = $path.$dtim.$dext;	//å‰Šé™¤ãƒ•ã‚¡ã‚¤ãƒ«
         break;
       }
     }
   }
-  if(!$flag) error("ŠY“–‹L–‚ªŒ©‚Â‚©‚ç‚È‚¢‚©ƒpƒXƒ[ƒh‚ªŠÔˆá‚Á‚Ä‚¢‚Ü‚·");
-  // ƒƒOXV
+  if(!$flag) error("Cannot find the post in question, or your password was incorrect.");
+  // ãƒ­ã‚°æ›´æ–°
   $fp = fopen(LOGFILE, "w");
   flock($fp, 2);
   fputs($fp, implode('', $line));
   fclose($fp);
 
-  if(is_file($delfile)) unlink($delfile);//íœ
+  if(is_file($delfile)) unlink($delfile);//å‰Šé™¤
 }
-/* ƒpƒX”FØ */
+/* ãƒ‘ã‚¹èªè¨¼ */
 function valid($pass){
-  if($pass && $pass != ADMIN_PASS) error("ƒpƒXƒ[ƒh‚ªˆá‚¢‚Ü‚·");
+  if($pass && $pass != ADMIN_PASS) error("The adminstration password does not match what you entered!");
 
   head($dat);
   echo $dat;
-  echo "[<a href=\"".PHP_SELF."\">Œf¦”Â‚É–ß‚é</a>]\n";
+  echo "[<a href=\"".PHP_SELF."\">Return</a>]\n";
   echo "<table width='100%'><tr><th bgcolor=#E08000>\n";
-  echo "<font color=#FFFFFF>ŠÇ—ƒ‚[ƒh</font>\n";
+  echo "<font color=#FFFFFF>Adminstration</font>\n";
   echo "</th></tr></table>\n";
   echo "<p><form action=\"".PHP_SELF."\" method=POST>\n";
-  // ƒƒOƒCƒ“ƒtƒH[ƒ€
+  // ãƒ­ã‚°ã‚¤ãƒ³ãƒ•ã‚©ãƒ¼ãƒ 
   if(!$pass){
-    echo "<center><input type=radio name=admin value=del checked>‹L–íœ ";
-    echo "<input type=radio name=admin value=post>ŠÇ—l“Še<p>";
+    echo "<center><input type=radio name=admin value=del checked>Delete Article ";
+    echo "<input type=radio name=admin value=post>Admin Post<p>";
     echo "<input type=hidden name=mode value=admin>\n";
     echo "<input type=password name=pass size=8>";
-    echo "<input type=submit value=\" ”FØ \"></form></center>\n";
+    echo "<input type=submit value=\" Verify \"></form></center>\n";
     die("</body></html>");
   }
 }
-/* ŠÇ—Òíœ */
+/* ç®¡ç†è€…å‰Šé™¤ */
 function admindel($delno,$chkno,$pass){
   global $path;
 
@@ -417,36 +418,36 @@ function admindel($delno,$chkno,$pass){
     for($i = 0; $i < count($line); $i++){
       list($no,$now,$name,$email,$sub,$com,$url,
            $host,$pw,$ext,$w,$h,$tim,$chk) = explode(",",$line[$i]);
-      if($chkno == $no){//‰æ‘œƒ`ƒFƒbƒN$chk=1‚É
+      if($chkno == $no){//ç”»åƒãƒã‚§ãƒƒã‚¯$chk=1ã«
         $find = TRUE;
         $line[$i] = "$no,$now,$name,$email,$sub,$com,$url,$host,$pw,$ext,$w,$h,$tim,1,\n";
         break;
       }
-      if($delno == $no){//íœ‚Ì‚Í‹ó‚É
+      if($delno == $no){//å‰Šé™¤ã®æ™‚ã¯ç©ºã«
         $find = TRUE;
         $line[$i] = "";
-        $delfile = $path.$tim.$ext;	//íœƒtƒ@ƒCƒ‹
+        $delfile = $path.$tim.$ext;	//å‰Šé™¤ãƒ•ã‚¡ã‚¤ãƒ«
         break;
       }
     }
-    if($find){//ƒƒOXV
+    if($find){//ãƒ­ã‚°æ›´æ–°
       $fp = fopen(LOGFILE, "w");
       flock($fp, 2);
       fputs($fp, implode('', $line));
       fclose($fp);
 
-      if(is_file($delfile)) unlink($delfile);//íœ
+      if(is_file($delfile)) unlink($delfile);//å‰Šé™¤
     }
   }
-  // íœ‰æ–Ê‚ğ•\¦
+  // å‰Šé™¤ç”»é¢ã‚’è¡¨ç¤º
   echo "<input type=hidden name=mode value=admin>\n";
   echo "<input type=hidden name=admin value=del>\n";
   echo "<input type=hidden name=pass value=\"$pass\">\n";
-  echo "<center><P>íœ‚µ‚½‚¢‹L–‚Ìƒ`ƒFƒbƒNƒ{ƒbƒNƒX‚Éƒ`ƒFƒbƒN‚ğ“ü‚êAíœƒ{ƒ^ƒ“‚ğ‰Ÿ‚µ‚Ä‰º‚³‚¢B\n";
+  echo "<center><P>Check the checkboxes of the posts you wish to delete and press the Delete button. \n";
   echo "<P><table border=1 cellspacing=0>\n";
-  echo "<tr bgcolor=6080f6><th>íœ</th><th>‹L–No</th><th>“Še“ú</th><th>‘è–¼</th>";
-  echo "<th>“ŠeÒ</th><th>ƒRƒƒ“ƒg</th><th>ƒzƒXƒg–¼</th><th>“Y•t<br>(Bytes)</th>";
-  if(CHECK) echo "<th>‰æ‘œ<br>‹–‰Â</th>";
+  echo "<tr bgcolor=6080f6><th>Delete</th><th>Post No.</th><th>Posted</th><th>Title</th>";
+  echo "<th>Poster</th><th>Contents</th><th>Host name</th><th>File<br>(Bytes)</th>";
+  if(CHECK) echo "<th>Image<br>Approval</th>";
   echo "</tr>\n";
 
   $line = file(LOGFILE);
@@ -455,23 +456,23 @@ function admindel($delno,$chkno,$pass){
     $img_flag = FALSE;
     list($no,$now,$name,$email,$sub,$com,$url,
          $host,$pw,$ext,$w,$h,$time,$chk) = explode(",",$line[$j]);
-    // ƒtƒH[ƒ}ƒbƒg
+    // ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆ
     list($now, $dmy) = explode("(", $now);
     if($email) $name="<a href=\"mailto:$email\">$name</a>";
     $com = str_replace("<br />"," ",$com);
     $com = htmlspecialchars($com);
     if(strlen($com) > 40) $com = substr($com,0,38) . " ...";
-    // ‰æ‘œ‚ª‚ ‚é‚Æ‚«‚ÍƒŠƒ“ƒN
+    // ç”»åƒãŒã‚ã‚‹ã¨ãã¯ãƒªãƒ³ã‚¯
     if($ext && is_file($path.$time.$ext)){
       $img_flag = TRUE;
       $clip = "<a href=\".".IMG_DIR.$time.$ext."\" target=_blank>".$time.$ext."</a>";
       $size = filesize($path.$time.$ext);
-      $all += $size;			//‡ŒvŒvZ
+      $all += $size;			//åˆè¨ˆè¨ˆç®—
     }else{
       $clip = "";
       $size = 0;
     }
-    $bg = ($j % 2) ? "d6d6f6" : "f6f6f6";//”wŒiF
+    $bg = ($j % 2) ? "d6d6f6" : "f6f6f6";//èƒŒæ™¯è‰²
 
     echo "<tr bgcolor=$bg><th><input type=checkbox name=del value=\"$no\"></th>";
     echo "<th>$no</th><td><small>$now</small></td><td>$sub</td>";
@@ -479,7 +480,7 @@ function admindel($delno,$chkno,$pass){
     echo "<td>$host</td><td align=center>$clip<br>($size)</td>\n";
 	
 
-    if(CHECK){//‰æ‘œƒ`ƒFƒbƒN
+    if(CHECK){//ç”»åƒãƒã‚§ãƒƒã‚¯
       if($img_flag && $chk == 1){
         echo "<th><font color=red>OK</font></th>";
       }elseif($img_flag && $chk != 1) {
@@ -490,21 +491,21 @@ function admindel($delno,$chkno,$pass){
     }
     echo "</tr>\n";
   }
-  if(CHECK) $msg = "or‹–‰Â‚·‚é";
+  if(CHECK) $msg = "or allow";
 
-  echo "</table><p><input type=submit value=\"íœ‚·‚é$msg\">";
-  echo "<input type=reset value=\"ƒŠƒZƒbƒg\"></form>";
+  echo "</table><p><input type=submit value=\"Delete $msg\">";
+  echo "<input type=reset value=\"Reset\"></form>";
 
   $all = (int)($all / 1024);
-  echo "y ‰æ‘œƒf[ƒ^‡Œv : <b>$all</b> KB z";
+  echo "ã€ Total file size of your board : <b>$all</b> KB ã€‘";
   die("</center></body></html>");
 }
-/* ƒI[ƒgƒŠƒ“ƒN */
+/* ã‚ªãƒ¼ãƒˆãƒªãƒ³ã‚¯ */
 function auto_link($proto){
   $proto = preg_replace("|([\w\d]*)\s?(https?://([\d\w\.-]+\.[\w\.]{2,6})[^\s\]\[\<\>]*/?)|i", "$1 <a href='$2'>$3</a>", $proto);
   return $proto;
 }
-/* ƒGƒ‰[‰æ–Ê */
+/* ã‚¨ãƒ©ãƒ¼ç”»é¢ */
 function error($mes){
   global $upfile_name,$path;
 
