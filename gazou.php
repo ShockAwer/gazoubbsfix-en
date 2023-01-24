@@ -207,7 +207,7 @@ function main(&$dat, $page){
     }
     // メイン作成
     $dat.="No.$no <font color=#cc1105 size=+1><b>$sub</b></font><br> ";
-    $dat.="Name <font color=#117743><b>$name</b></font> Date $now &nbsp; $url [<a href=".PHP_SELF."?res=$no>レス</a>]";
+    $dat.="Name <font color=#117743><b>$name</b></font> Date $now &nbsp; $url [<a href=".PHP_SELF."?res=$no>Reply</a>]";
     $dat.="<p><blockquote>$imgsrc $com</blockquote><br clear=left><hr>\n";
 
     $p++;
