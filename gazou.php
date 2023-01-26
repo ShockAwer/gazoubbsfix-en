@@ -26,27 +26,27 @@ if(phpversion()>="4.1.0"){
   $upfile=$_FILES["upfile"]["tmp_name"];
 }
 //----設定--------
-define(LOGFILE, 'imglog.log');		// Name for logfile
-define(IMG_DIR, 'img/');		// Img folder for gazoubbs
+define('LOGFILE', 'imglog.log');		// Name for logfile
+define('IMG_DIR', 'img/');		// Img folder for gazoubbs
 
-define(TITLE, 'Image BBS');		// Title of your BBS（<title>とTOP）
-define(HOME,  '../');	// Clicked upon clicking "Index"
+define('TITLE', 'Image BBS');		// Title of your BBS（<title>とTOP）
+define('HOME',  '../');	// Clicked upon clicking "Index"
 
-define(MAX_KB, '100');			//Max kilobytes a file can have
-define(MAX_W,  '250');			//Max width a file can have
-define(MAX_H,  '250');			//Max height a file can have
+define('MAX_KB', '100');			//Max kilobytes a file can have
+define('MAX_W',  '250');			//Max width a file can have
+define('MAX_H',  '250');			//Max height a file can have
 
-define(PAGE_DEF, '7');			// Number of posts that can appear on one page
-define(LOG_MAX,  '200');		// Mazimum number of posts in the log
+define('PAGE_DEF', '7');			// Number of posts that can appear on one page
+define('LOG_MAX',  '200');		// Mazimum number of posts in the log
 
-define(ADMIN_PASS, '0123');		// The admin password
-define(CHECK, 0);			//Make uploaded images have to go through approval by admins? yes=1
-define(SOON_ICON, '/soon.jpg');		// See CHECK. Image that appears as a replacement for photos going through the approval proccess
-define(RE_COL, '789922');               // Color of greentext
+define('ADMIN_PASS', '0123');		// The admin password
+define('CHECK', 0);			//Make uploaded images have to go through approval by admins? yes=1
+define('SOON_ICON', '/soon.jpg');		// See CHECK. Image that appears as a replacement for photos going through the approval proccess
+define('RE_COL', '789922');               // Color of greentext
 
-define(NIKKI, 0);			//Close the bulletin board to users? Yes=1 No=0
+define('NIKKI', 0);			//Close the bulletin board to users? Yes=1 No=0
 
-define(PHP_SELF, "gazou.php");		//Script name;
+define('PHP_SELF', "gazou.php");		//Script name;
 
 
 //画像保存絶対パス $path="/home/public_html/***/img/";
@@ -465,7 +465,7 @@ function admindel($delno,$chkno,$pass){
     // 画像があるときはリンク
     if($ext && is_file($path.$time.$ext)){
       $img_flag = TRUE;
-      $clip = "<a href=\".".IMG_DIR.$time.$ext."\" target=_blank>".$time.$ext."</a>";
+      $clip = "<a href=\"".IMG_DIR.$time.$ext."\" target=_blank>".$time.$ext."</a>";
       $size = filesize($path.$time.$ext);
       $all += $size;			//合計計算
     }else{
